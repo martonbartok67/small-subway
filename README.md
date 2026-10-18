@@ -8,8 +8,11 @@ An original browser game inspired by the subway-design genre: draw lines between
 npm install
 npm run dev      # http://localhost:5173
 npm test         # headless simulation tests
-npm run build    # static build in dist/
+npm run build    # static build in dist/ (any static host: Vercel, Netlify, GitHub Pages)
+npm run build:single  # dist/small-subway.html, everything inlined in one file
 ```
+
+On phones the game can be added to the home screen (web app manifest) and keeps working offline after the first visit (service worker, static hosts only).
 
 ## How to play
 
