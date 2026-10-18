@@ -1,4 +1,5 @@
 :root {
+  --station: #ffffff;
   --bg: #f5f2ec;
   --fg: #2a2424;
   --muted: #8a8280;
@@ -6,6 +7,7 @@
   --shadow: 0 6px 24px rgba(40, 30, 30, 0.12);
 }
 body.night {
+  --station: #1c1a1b;
   --bg: #1c1a1b;
   --fg: #ece7df;
   --muted: #9b948e;
@@ -311,4 +313,96 @@ body.night .overlay {
   .score small {
     display: none;
   }
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.ghost {
+  border: 2px solid var(--fg);
+  background: transparent;
+  border-radius: 30px;
+  padding: 10px 22px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+}
+.ghost:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+.card.help {
+  position: relative;
+  width: min(400px, calc(100vw - 32px));
+  text-align: left;
+}
+.help .close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 16px;
+  cursor: pointer;
+}
+.help .step {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.help .art {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 10px 0 6px;
+}
+.help p {
+  min-height: 5.8em;
+  margin-bottom: 20px;
+}
+.help-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.help-nav .primary {
+  min-width: 92px;
+}
+.dots {
+  display: flex;
+  gap: 2px;
+}
+.dot {
+  width: 22px;
+  height: 22px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.dot::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fg);
+  opacity: 0.2;
+}
+.dot.on::after {
+  opacity: 1;
+}
+button:focus-visible {
+  outline: 3px solid var(--fg);
+  outline-offset: 2px;
 }

@@ -14,6 +14,7 @@ const audio = new Audio();
 const newWorld = () => new World(innerWidth < innerHeight ? portrait(RIVERTON) : RIVERTON, (Math.random() * 2 ** 31) | 0);
 let world = newWorld();
 let speed: 0 | 1 | 2 = 0;
+let speedBeforeHelp: 0 | 1 | 2 = 1;
 let started = false;
 let night = (() => {
   try {
@@ -53,6 +54,19 @@ const hud = new Hud(document.getElementById('hud')!, {
     editor.selectedLine = -1;
   },
   chooseUpgrade: (k) => world.chooseUpgrade(k),
+  helpToggled: (open) => {
+    if (open) {
+      speedBeforeHelp = speed;
+      speed = 0;
+    } else {
+      speed = speedBeforeHelp;
+      try {
+        localStorage.setItem('ss-help-seen', '1');
+      } catch {
+        /* storage unavailable */
+      }
+    }
+  },
   start: () => {
     audio.unlock();
     // Fresh world on every start so the map orientation matches the screen.
@@ -61,6 +75,14 @@ const hud = new Hud(document.getElementById('hud')!, {
     editor.cancel();
     started = true;
     speed = 1;
+    // First game on this device: show the guide once, with the clock stopped.
+    let seen = false;
+    try {
+      seen = localStorage.getItem('ss-help-seen') === '1';
+    } catch {
+      /* storage unavailable */
+    }
+    if (!seen) hud.openHelp();
   },
 });
 
@@ -87,6 +109,10 @@ window.addEventListener('pointerup', release);
 window.addEventListener('pointercancel', () => editor.cancel());
 
 window.addEventListener('keydown', (e) => {
+  if (hud.helpOpen) {
+    if (e.key === 'Escape') hud.closeHelp();
+    return;
+  }
   if (!started || world.over) return;
   if (e.code === 'Space') {
     e.preventDefault();

@@ -11,6 +11,7 @@ const ICON = {
   fast: '<svg viewBox="0 0 16 16"><path d="M1 3l7 5-7 5zM8 3l7 5-7 5z"/></svg>',
   moon: '<svg viewBox="0 0 16 16"><path d="M10 1a7 7 0 1 0 5 11A6 6 0 0 1 10 1z"/></svg>',
   sound: '<svg viewBox="0 0 16 16"><path d="M2 6h3l4-3v10L5 10H2z"/><path d="M11 5c1.5 1.5 1.5 4.5 0 6" stroke="currentColor" stroke-width="1.6" fill="none"/></svg>',
+  info: '<svg viewBox="0 0 16 16"><circle cx="8" cy="4" r="1.6"/><rect x="6.6" y="6.6" width="2.8" height="7.4" rx="1"/></svg>',
   mute: '<svg viewBox="0 0 16 16"><path d="M2 6h3l4-3v10L5 10H2z"/><path d="M11 6l4 4M15 6l-4 4" stroke="currentColor" stroke-width="1.6"/></svg>',
 };
 
@@ -23,6 +24,59 @@ const ITEM_SVG: Record<ItemKind | 'tunnel' | 'line', string> = {
   tunnel: '<svg viewBox="0 0 26 18"><path d="M2 16V9a11 7 0 0 1 22 0v7h-5V10a6 4 0 0 0-12 0v6z" fill="currentColor"/></svg>',
   line: '<svg viewBox="0 0 26 18"><circle cx="13" cy="9" r="7" fill="none" stroke="currentColor" stroke-width="3"/></svg>',
 };
+
+const ITEM_SVG_INNER = {
+  loco: '<rect x="0" y="6" width="40" height="20" rx="4" fill="var(--fg)"/>',
+  carriage: '<rect x="1.5" y="7.5" width="37" height="17" rx="4" fill="none" stroke="var(--fg)" stroke-width="3"/>',
+  interchange: '<circle cx="20" cy="16" r="13" fill="none" stroke="var(--fg)" stroke-width="3.5"/><circle cx="20" cy="16" r="5" fill="var(--fg)"/>',
+  tunnel: '<path d="M2 30V16a18 12 0 0 1 36 0v14h-8V18a10 7 0 0 0-20 0v12z" fill="var(--fg)"/>',
+};
+const STATION = 'fill="var(--station)" stroke="var(--fg)" stroke-width="3.5"';
+const tri = (x: number, y: number, r: number, attrs: string) =>
+  `<path d="M${x} ${y - r}L${x + r * 0.9} ${y + r * 0.6}L${x - r * 0.9} ${y + r * 0.6}Z" ${attrs} stroke-linejoin="round"/>`;
+const peep = (x: number, y: number) => tri(x, y, 4, 'fill="var(--fg)"');
+
+/** Short how-to-play guide, one idea per page, each with a small diagram. */
+const HELP: { title: string; text: string; art: string }[] = [
+  {
+    title: 'Move people',
+    text: 'Stations appear as shapes. Each waiting passenger shows the shape they want to reach. Any station of that shape will do.',
+    art: `<circle cx="50" cy="50" r="13" ${STATION}/>${peep(74, 40)}${peep(85, 40)}${peep(96, 40)}
+      <path d="M110 50h52" stroke="var(--muted)" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/>
+      <path d="M156 42l9 8-9 8" fill="none" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+      ${tri(186, 52, 16, STATION)}`,
+  },
+  {
+    title: 'Draw a line',
+    text: 'Drag from one station to another. Keep dragging through more stations to add them. A train joins the line if you have a spare locomotive.',
+    art: `<path d="M40 62L80 22H130" fill="none" stroke="#e2412b" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M130 22L180 62" stroke="#e2412b" stroke-width="8" stroke-linecap="round" stroke-dasharray="1 13"/>
+      <circle cx="40" cy="62" r="12" ${STATION}/><rect x="119" y="11" width="22" height="22" ${STATION}/>${tri(180, 64, 15, STATION)}
+      <circle cx="166" cy="51" r="9" fill="var(--fg)" opacity=".18"/>`,
+  },
+  {
+    title: 'Reshape lines',
+    text: 'Drag the end bar to extend or shorten a line, or back to its first station to make a loop. Drag the middle of a line onto a station to add it, or onto one of its stops to remove it. Tap a line colour, then ✕, to delete it.',
+    art: `<path d="M30 60H120L150 30H178" fill="none" stroke="#2468d8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M178 18v24" stroke="#2468d8" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="30" cy="60" r="12" ${STATION}/><circle cx="120" cy="60" r="12" ${STATION}/><rect x="139" y="19" width="22" height="22" ${STATION}/>
+      <path d="M190 30h18m-7-7 7 7-7 7" fill="none" stroke="var(--muted)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`,
+  },
+  {
+    title: 'Trains and upgrades',
+    text: 'Each week brings a locomotive and one upgrade of your choice. Drag a locomotive onto a line, a carriage onto a train, an interchange onto a station. Crossing water uses a tunnel. Drag a train to move it to another line.',
+    art: `<g transform="translate(22 30)">${ITEM_SVG_INNER.loco}</g><g transform="translate(70 30)">${ITEM_SVG_INNER.carriage}</g>
+      <g transform="translate(118 30)">${ITEM_SVG_INNER.interchange}</g><g transform="translate(166 30)">${ITEM_SVG_INNER.tunnel}</g>`,
+  },
+  {
+    title: "Don't let it overflow",
+    text: `A station holds 6 waiting passengers, 18 with an interchange. Past that, a ring fills up; when it closes, the game ends. Pause any time with ⏸${COARSE ? '' : ' or Space'} and keep editing while paused.`,
+    art: `<circle cx="80" cy="48" r="34" fill="var(--fg)" opacity=".1"/>
+      <path d="M80 48V14A34 34 0 1 1 46 48Z" fill="var(--fg)" opacity=".45"/>
+      <circle cx="80" cy="48" r="13" ${STATION}/>
+      ${[0, 1, 2, 3, 4, 5].map((i) => peep(108 + i * 12, 40)).join('')}${tri(108, 54, 4, 'fill="#d23b2a"')}`,
+  },
+];
 
 const UPGRADE_LABEL: Record<UpgradeKind, [string, keyof typeof ITEM_SVG]> = {
   line: ['New line', 'line'],
@@ -40,6 +94,8 @@ export interface HudCallbacks {
   deleteLine(slot: number): void;
   chooseUpgrade(k: UpgradeKind): void;
   start(): void;
+  /** The guide opened (true) or closed (false); the game pauses while it is open. */
+  helpToggled(open: boolean): void;
 }
 
 export interface HudState {
@@ -60,6 +116,8 @@ export class Hud {
   private overlay: HTMLElement;
   private toastEl: HTMLElement;
   private toastTimer = 0;
+  /** Page of the how-to-play guide, or null when it is closed. */
+  private help: number | null = null;
 
   constructor(
     root: HTMLElement,
@@ -111,7 +169,45 @@ export class Hud {
       this.cb.deleteLine(Number(arg));
     } else if (act === 'upgrade') this.cb.chooseUpgrade(arg as UpgradeKind);
     else if (act === 'start') this.cb.start();
+    else if (act === 'help') this.openHelp();
+    else if (act === 'help-go') this.help = Math.max(0, Math.min(HELP.length - 1, Number(arg)));
+    else if (act === 'help-close') this.closeHelp();
     return true;
+  }
+
+  get helpOpen(): boolean {
+    return this.help !== null;
+  }
+
+  openHelp(): void {
+    if (this.help !== null) return;
+    this.help = 0;
+    this.cb.helpToggled(true);
+  }
+
+  closeHelp(): void {
+    if (this.help === null) return;
+    this.help = null;
+    this.cb.helpToggled(false);
+  }
+
+  private helpCard(): string {
+    const page = this.help!;
+    const h = HELP[page];
+    const last = page === HELP.length - 1;
+    const dots = HELP.map((_, i) => `<button class="dot${i === page ? ' on' : ''}" data-act="help-go:${i}" aria-label="Page ${i + 1}"></button>`).join('');
+    return `<div class="overlay"><div class="card help" role="dialog" aria-label="How to play">
+      <button class="close" data-act="help-close" aria-label="Close">✕</button>
+      <div class="step">${page + 1} of ${HELP.length}</div>
+      <svg class="art" viewBox="0 0 220 96" aria-hidden="true">${h.art}</svg>
+      <h2>${h.title}</h2>
+      <p>${h.text}</p>
+      <div class="help-nav">
+        <button class="ghost" data-act="help-go:${page - 1}" ${page === 0 ? 'disabled' : ''}>Back</button>
+        <div class="dots">${dots}</div>
+        <button class="primary" data-act="${last ? 'help-close' : `help-go:${page + 1}`}">${last ? 'Play' : 'Next'}</button>
+      </div>
+    </div></div>`;
   }
 
   private set(el: HTMLElement, key: string, html: () => string): void {
@@ -137,6 +233,7 @@ export class Hud {
           ${btn('speed:2', ICON.fast, s.speed === 2, 'Fast forward')}
           ${btn('night', ICON.moon, s.night, 'Night mode')}
           ${btn('mute', s.muted ? ICON.mute : ICON.sound, false, 'Sound')}
+          ${btn('help', ICON.info, false, 'How to play')}
         </div>`;
     });
     const scoreEl = this.top.querySelector('.score-n')!;
@@ -163,22 +260,20 @@ export class Hud {
     });
 
     let ovKey = 'none';
-    if (!s.started) ovKey = 'start';
+    if (this.help !== null) ovKey = `help:${this.help}`;
+    else if (!s.started) ovKey = 'start';
     else if (w.over) ovKey = `over:${w.score}`;
     else if (w.pendingUpgrade) ovKey = `up:${w.pendingUpgrade.join()}:${w.week}`;
     this.set(this.overlay, ovKey, () => {
+      if (this.help !== null) return this.helpCard();
       if (ovKey === 'start')
         return `<div class="overlay"><div class="card">
           <h1>Small Subway</h1>
           <p>Design a subway for a growing city. Keep every station moving.</p>
-          <ul>
-            <li>Drag from a station to another to draw a line.</li>
-            <li>Drag a line's end bar to extend or shorten it; drag back to the start to make a loop.</li>
-            <li>Drag the middle of a line over a station to add it, or over its own stop to remove it.</li>
-            <li>Drag trains between lines; drop one off a line to store it.</li>
-            <li>${COARSE ? 'Tap ⏸ to pause.' : 'Space pauses.'} You can edit while paused.</li>
-          </ul>
-          <button class="primary" data-act="start">Start</button>
+          <div class="actions">
+            <button class="primary" data-act="start">Start</button>
+            <button class="ghost" data-act="help">How to play</button>
+          </div>
         </div></div>`;
       if (w.over)
         return `<div class="overlay"><div class="card">
