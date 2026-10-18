@@ -42,8 +42,14 @@ export class Editor {
   cursor: Vec2 = v(0, 0);
   selectedLine = -1;
   private lastHover: number | null = null;
-  /** Hit radius in screen px; touch gets a larger target. */
+  /** Hit radius in screen px; touch gets a larger target and a loupe. */
   hitPx = 24;
+  touch = false;
+
+  setPointer(type: string): void {
+    this.touch = type === 'touch';
+    this.hitPx = this.touch ? 40 : 24;
+  }
 
   constructor(
     private world: () => World,

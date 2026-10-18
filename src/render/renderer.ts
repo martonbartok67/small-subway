@@ -6,8 +6,8 @@ import { traceShape } from './shapes';
 import type { Theme } from './theme';
 
 const LINE_W = 9;
-const HUD_TOP = 64;
-const HUD_BOTTOM = 92;
+const LOUPE_R = 64;
+const LOUPE_ZOOM = 1.8;
 
 export class Renderer {
   private ctx: CanvasRenderingContext2D;
@@ -18,6 +18,8 @@ export class Renderer {
   private ox = 0;
   private oy = 0;
   private cam: { halfW: number; halfH: number } | null = null;
+  /** Screen px reserved for the HUD above and below the map. */
+  insets = { top: 64, bottom: 92 };
   /** Glyphs grow when zoomed far out so they stay readable on small screens. */
   private boost = 1;
   private get stationR() {
@@ -52,10 +54,11 @@ export class Renderer {
     if (!this.cam) this.cam = { ...target };
     this.cam.halfW += (target.halfW - this.cam.halfW) * 0.04;
     this.cam.halfH += (target.halfH - this.cam.halfH) * 0.04;
-    const availH = Math.max(100, this.h - HUD_TOP - HUD_BOTTOM);
+    const { top, bottom } = this.insets;
+    const availH = Math.max(100, this.h - top - bottom);
     this.scale = Math.min(this.w / (2 * this.cam.halfW + 60), availH / (2 * this.cam.halfH));
     this.ox = this.w / 2;
-    this.oy = HUD_TOP + availH / 2;
+    this.oy = top + availH / 2;
     this.boost = Math.max(1, Math.min(1.7, 0.8 / this.scale));
   }
 
@@ -74,7 +77,11 @@ export class Renderer {
     ctx.fillStyle = theme.bg;
     ctx.fillRect(0, 0, this.w, this.h);
     ctx.setTransform(this.dpr * this.scale, 0, 0, this.dpr * this.scale, this.dpr * this.ox, this.dpr * this.oy);
+    this.drawScene(world, editor, theme, now);
+    if (editor.active && editor.touch) this.drawLoupe(world, editor, theme, now);
+  }
 
+  private drawScene(world: World, editor: Editor, theme: Theme, now: number): void {
     this.drawWater(world, theme);
     const preview = editor.preview();
     this.drawLines(world, theme, preview?.slot ?? -1, editor.selectedLine);
@@ -82,6 +89,39 @@ export class Renderer {
     for (const t of world.trains) this.drawTrain(world, t, theme);
     for (const s of world.stations) this.drawStation(world, s, theme, now);
     this.drawCarried(world, editor, theme);
+  }
+
+  /** Magnified view above the finger, so touch drags can see what they are aiming at. */
+  private drawLoupe(world: World, editor: Editor, theme: Theme, now: number): void {
+    const ctx = this.ctx;
+    const f = this.toScreen(editor.cursor);
+    const above = f.y - LOUPE_R - 56 > this.insets.top - 40;
+    const c = v(Math.max(LOUPE_R + 6, Math.min(this.w - LOUPE_R - 6, f.x)), above ? f.y - LOUPE_R - 56 : f.y + LOUPE_R + 56);
+    const k = this.scale * LOUPE_ZOOM;
+    ctx.save();
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, LOUPE_R, 0, Math.PI * 2);
+    ctx.fillStyle = theme.bg;
+    ctx.fill();
+    ctx.clip();
+    ctx.setTransform(this.dpr * k, 0, 0, this.dpr * k, this.dpr * (c.x - editor.cursor.x * k), this.dpr * (c.y - editor.cursor.y * k));
+    this.drawScene(world, editor, theme, now);
+    ctx.restore();
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.strokeStyle = theme.ui;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, LOUPE_R, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 0.5;
+    ctx.beginPath();
+    ctx.moveTo(c.x - 6, c.y);
+    ctx.lineTo(c.x + 6, c.y);
+    ctx.moveTo(c.x, c.y - 6);
+    ctx.lineTo(c.x, c.y + 6);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
   }
 
   private drawWater(world: World, theme: Theme): void {

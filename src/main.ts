@@ -34,6 +34,7 @@ const hud = new Hud(document.getElementById('hud')!, {
   toggleNight: () => {
     night = !night;
     document.body.classList.toggle('night', night);
+    document.querySelector('meta[name=theme-color]')?.setAttribute('content', night ? NIGHT.bg : DAY.bg);
     try {
       localStorage.setItem('ss-night', night ? '1' : '0');
     } catch {
@@ -43,6 +44,7 @@ const hud = new Hud(document.getElementById('hud')!, {
   toggleMute: () => (audio.muted = !audio.muted),
   itemDown: (kind, e) => {
     audio.unlock();
+    editor.setPointer(e.pointerType);
     editor.beginItem(kind, renderer.toWorld(e.clientX, e.clientY));
   },
   selectLine: (slot) => (editor.selectedLine = editor.selectedLine === slot ? -1 : slot),
@@ -67,7 +69,7 @@ const hud = new Hud(document.getElementById('hud')!, {
 canvas.addEventListener('pointerdown', (e) => {
   if (!started || world.over || world.pendingUpgrade) return;
   audio.unlock();
-  editor.hitPx = e.pointerType === 'touch' ? 40 : 24;
+  editor.setPointer(e.pointerType);
   if (editor.down(renderer.toWorld(e.clientX, e.clientY))) canvas.setPointerCapture(e.pointerId);
 });
 window.addEventListener('pointermove', (e) => {
@@ -76,8 +78,10 @@ window.addEventListener('pointermove', (e) => {
 const release = (e: PointerEvent) => {
   if (!editor.active) return;
   const preview = editor.preview();
+  const before = world.networkVersion;
   editor.up(renderer.toWorld(e.clientX, e.clientY), hud.isOverBar(document.elementFromPoint(e.clientX, e.clientY)));
   if (preview && preview.stops.length >= 2 && !preview.ok) hud.toast('Not enough tunnels for that route');
+  if (world.networkVersion !== before) navigator.vibrate?.(8);
 };
 window.addEventListener('pointerup', release);
 window.addEventListener('pointercancel', () => editor.cancel());
@@ -92,6 +96,15 @@ window.addEventListener('keydown', (e) => {
   else if (e.key === 'Escape') editor.cancel();
 });
 window.addEventListener('resize', () => renderer.resize());
+// iOS only unlocks Web Audio from touchend/click, not pointerdown.
+window.addEventListener('touchend', () => audio.unlock(), { passive: true });
+// Phones background tabs often; never let the city overflow while nobody is looking.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && started && !world.over) speed = 0;
+});
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
 
 // ---------- loop ----------
 
@@ -113,7 +126,10 @@ function frame(now: number) {
   for (const ev of world.events) {
     if (ev.type === 'deliver') audio.deliver(ev.line);
     else if (ev.type === 'stationSpawn' && world.time > 0) audio.station();
-    else if (ev.type === 'weekEnd') audio.weekEnd();
+    else if (ev.type === 'weekEnd') {
+      audio.weekEnd();
+      navigator.vibrate?.([20, 60, 20]);
+    }
     else if (ev.type === 'gameOver') {
       audio.gameOver();
       editor.cancel();
@@ -122,6 +138,7 @@ function frame(now: number) {
   world.events.length = 0;
   const theme = night ? NIGHT : DAY;
   hud.update({ world, speed, night, muted: audio.muted, selectedLine: editor.selectedLine, lineColors: theme.lines, started });
+  renderer.insets = hud.insets();
   renderer.draw(world, editor, theme, now);
   requestAnimationFrame(frame);
 }

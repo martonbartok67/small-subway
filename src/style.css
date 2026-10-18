@@ -26,6 +26,14 @@ body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  position: fixed;
+  width: 100%;
+}
+button,
+.item {
+  touch-action: manipulation;
 }
 #game {
   position: fixed;
@@ -45,9 +53,9 @@ body {
 }
 .top {
   position: absolute;
-  top: 14px;
-  left: 16px;
-  right: 16px;
+  top: calc(14px + env(safe-area-inset-top));
+  left: calc(16px + env(safe-area-inset-left));
+  right: calc(16px + env(safe-area-inset-right));
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -111,7 +119,7 @@ button {
 }
 .bar {
   position: absolute;
-  bottom: 14px;
+  bottom: calc(14px + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -271,8 +279,15 @@ body.night .overlay {
 }
 @media (max-width: 560px) {
   .bar {
-    gap: 10px;
-    padding: 8px 10px;
+    gap: 8px 12px;
+    padding: 8px 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    border-radius: 24px;
+    width: max-content;
+  }
+  .item {
+    padding: 6px 4px;
   }
   .swatch {
     width: 22px;

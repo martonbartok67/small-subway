@@ -2,6 +2,7 @@ import type { UpgradeKind } from '../sim/types';
 import type { World } from '../sim/world';
 import type { ItemKind } from './editor';
 
+const COARSE = typeof matchMedia !== 'undefined' && matchMedia('(pointer: coarse)').matches;
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const ICON = {
@@ -69,14 +70,20 @@ export class Hud {
     this.bar = root.querySelector('.bar')!;
     this.overlay = root.querySelector('.overlay-slot')!;
     this.toastEl = root.querySelector('.toast')!;
-    root.addEventListener('click', (e) => this.onClick(e));
+    // Act on pointerdown: instant on touch, and immune to the element being re-rendered before a click lands.
     root.addEventListener('pointerdown', (e) => {
+      if (this.onAct(e)) return;
       const item = (e.target as HTMLElement).closest<HTMLElement>('[data-item]');
       if (item && !item.classList.contains('empty')) {
         e.preventDefault();
         this.cb.itemDown(item.dataset.item as ItemKind, e);
       }
     });
+  }
+
+  /** Screen-space band the HUD covers, so the map is laid out between them. */
+  insets(): { top: number; bottom: number } {
+    return { top: this.top.getBoundingClientRect().bottom + 8, bottom: window.innerHeight - this.bar.getBoundingClientRect().top + 8 };
   }
 
   isOverBar(target: EventTarget | null): boolean {
@@ -90,9 +97,10 @@ export class Hud {
     this.toastTimer = window.setTimeout(() => (this.toastEl.style.opacity = '0'), 1800);
   }
 
-  private onClick(e: MouseEvent): void {
+  private onAct(e: PointerEvent): boolean {
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-act]');
-    if (!el) return;
+    if (!el) return false;
+    e.preventDefault();
     const [act, arg] = el.dataset.act!.split(':');
     if (act === 'speed') this.cb.setSpeed(Number(arg) as 0 | 1 | 2);
     else if (act === 'night') this.cb.toggleNight();
@@ -103,6 +111,7 @@ export class Hud {
       this.cb.deleteLine(Number(arg));
     } else if (act === 'upgrade') this.cb.chooseUpgrade(arg as UpgradeKind);
     else if (act === 'start') this.cb.start();
+    return true;
   }
 
   private set(el: HTMLElement, key: string, html: () => string): void {
@@ -115,12 +124,12 @@ export class Hud {
   update(s: HudState): void {
     const w = s.world;
     const day = Math.floor(w.day);
-    const topKey = [w.score, day, s.speed, s.night, s.muted].join('|');
+    const topKey = [day, s.speed, s.night, s.muted].join('|');
     this.set(this.top, topKey, () => {
       const btn = (act: string, icon: string, on: boolean, label: string) =>
         `<button class="icon-btn${on ? ' on' : ''}" data-act="${act}" aria-label="${label}">${icon}</button>`;
       return `
-        <div class="score">${w.score} <small>passengers</small></div>
+        <div class="score"><span class="score-n"></span> <small>passengers</small></div>
         <div class="clock">
           <div class="day">${DAYS[day % 7]}<small>Week ${Math.floor(day / 7) + 1}</small></div>
           ${btn('speed:0', ICON.pause, s.speed === 0, 'Pause')}
@@ -130,6 +139,8 @@ export class Hud {
           ${btn('mute', s.muted ? ICON.mute : ICON.sound, false, 'Sound')}
         </div>`;
     });
+    const scoreEl = this.top.querySelector('.score-n')!;
+    if (scoreEl.textContent !== String(w.score)) scoreEl.textContent = String(w.score);
 
     const inv = w.inv;
     const lineKey = w.lines.map((l) => (l ? 1 : 0)).join('');
@@ -165,7 +176,7 @@ export class Hud {
             <li>Drag a line's end bar to extend or shorten it; drag back to the start to make a loop.</li>
             <li>Drag the middle of a line over a station to add it, or over its own stop to remove it.</li>
             <li>Drag trains between lines; drop one off a line to store it.</li>
-            <li>Space pauses. You can edit while paused.</li>
+            <li>${COARSE ? 'Tap ⏸ to pause.' : 'Space pauses.'} You can edit while paused.</li>
           </ul>
           <button class="primary" data-act="start">Start</button>
         </div></div>`;
