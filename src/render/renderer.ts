@@ -71,6 +71,10 @@ export class Renderer {
   }
 
   draw(world: World, editor: Editor, theme: Theme, now: number): void {
+    // iOS home-screen apps settle their viewport after launch without always firing
+    // resize, which leaves the bitmap at a stale size and stretches the map. Re-check every frame.
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (this.canvas.clientWidth !== this.w || this.canvas.clientHeight !== this.h || dpr !== this.dpr) this.resize();
     this.fit(world);
     const ctx = this.ctx;
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
