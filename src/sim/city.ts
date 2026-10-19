@@ -36,6 +36,7 @@ export const RIVERTON: CityDef = {
     { numDays: 5, randomness: 0.0, types: ['circle', 'triangle', 'circle', 'circle'] },
   ],
   cooldownDays: 1,
+  minSpawnGapDays: 0.8,
   specials: ['pentagon', 'star', 'cross', 'diamond', 'gem', 'wedge', 'egg'],
   camera: { startHalfH: 360, endHalfH: 1000, delayDays: 1, durationDays: 55, aspect: 1.7 },
   lines: { start: 3, max: 7 },

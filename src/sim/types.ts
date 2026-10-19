@@ -96,6 +96,8 @@ export interface CityDef {
   areas: CityArea[];
   schedules: Schedule[];
   cooldownDays: number;
+  /** Minimum days between two new stations, so arrivals never come in bursts. */
+  minSpawnGapDays: number;
   specials: Shape[];
   /** Half-height of the spawnable view in world units; aspect is fixed so the sim stays renderer-independent. */
   camera: { startHalfH: number; endHalfH: number; delayDays: number; durationDays: number; aspect: number };

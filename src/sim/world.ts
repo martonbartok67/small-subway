@@ -58,6 +58,7 @@ export class World {
   private byId = new Map<number, Station>();
   private spawnQueue: { type: SpawnType; at: number }[] = [];
   private nextScheduleAt = 0.5;
+  private lastSpawnAt = -Infinity;
   private baseCache = new Map<string, { path: Vec2[]; crossing: boolean }>();
 
   constructor(
@@ -192,10 +193,11 @@ export class World {
         .sort((a, b) => a.at - b.at);
       this.nextScheduleAt = day + sched.numDays + this.city.cooldownDays;
     }
-    if (this.spawnQueue.length && this.spawnQueue[0].at <= day) {
+    if (this.spawnQueue.length && this.spawnQueue[0].at <= day && day - this.lastSpawnAt >= this.city.minSpawnGapDays) {
       const item = this.spawnQueue.shift()!;
       // Retry later instead of banning the type when there is no room.
-      if (!this.tryPlace(item.type)) this.spawnQueue.unshift({ type: item.type, at: day + 0.25 });
+      if (this.tryPlace(item.type)) this.lastSpawnAt = day;
+      else this.spawnQueue.unshift({ type: item.type, at: day + 0.25 });
     }
   }
 
