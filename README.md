@@ -48,6 +48,6 @@ The network is a graph of platform nodes and "aboard line L at stop i, departing
 
 ### Tuning status
 
-Confirmed-from-source values: capacities (6 / 18 / 6 per car), trains per line (11 − max lines), the 45 s + 2 s overcrowd timer and its 2 s floor after upgrades, weekly locomotive plus a choice of two upgrades, 50 % replacement chance for wedge/star/cross specials, triangles never asking for squares.
+Confirmed-from-source values: capacities (18 interchange, 6 per car; plain stations are eased to 8), trains per line (11 − max lines), the 45 s + 2 s overcrowd timer and its 2 s floor after upgrades, weekly locomotive plus a choice of two upgrades, 50 % replacement chance for wedge/star/cross specials, triangles never asking for squares.
 
 Estimated and meant to be tuned by playtesting (all in `src/sim/city.ts`): train speed and acceleration, passenger spawn interval curve, demand weights, camera growth, station spacing. The greedy test bot currently loses around days 11 to 22; a thoughtful human should last several weeks.
