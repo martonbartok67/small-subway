@@ -43,9 +43,9 @@ export const RIVERTON: CityDef = {
   train: { speed: 110, accel: 70, decel: 140, capacity: 6, maxCars: 4 },
   stationCapacity: 6,
   interchangeCapacity: 18,
-  passenger: { baseInterval: 19, growthPerDay: 0.1, minInterval: 3.6, scale: 1 },
+  passenger: { baseInterval: 29, growthPerDay: 0.1, minInterval: 3.6, scale: 1 },
   dayLength: 19.2,
-  overcrowdSeconds: 45,
+  overcrowdSeconds: 50,
   graceSeconds: 2,
   dwellPerPassenger: 0.3,
   demand: {
