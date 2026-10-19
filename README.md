@@ -23,7 +23,7 @@ On phones the game can be added to the home screen (web app manifest) and keeps 
 - Drag a train to another line, or drop it off the network to store it.
 - Click a line swatch, then the ✕, to delete a line.
 - Space pauses (editing works while paused). `1` / `2` set speed.
-- The game ends when a station stays overcrowded for 45 s (plus a 2 s grace).
+- The game ends when a station stays overcrowded for 60 s (plus a 2 s grace).
 
 ## Architecture
 
